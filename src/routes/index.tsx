@@ -1,9 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Send, Sparkles, Calendar, Map, Hotel, Camera, UtensilsCrossed, Cloud, Compass, Shield, Bell, DollarSign } from "lucide-react";
+import { Send, Sparkles, Calendar, Map, Hotel, Camera, UtensilsCrossed, Cloud, Compass, Shield, Bell, DollarSign, Bot, WifiOff } from "lucide-react";
 import { sendChatMessage } from "@/lib/chat.functions";
+import { supabase } from "@/integrations/supabase/client";
 import cristo from "@/assets/cristo-hero.jpg";
+import rioBeach from "@/assets/rio-beach.jpg";
+import eventosRio from "@/assets/eventos-rio.jpg";
+
+const MAX_INPUT = 500;
+// Allow letters (incl. accents), digits, whitespace and common punctuation. Block control chars.
+const SAFE_TEXT = /^[\p{L}\p{N}\p{P}\p{Zs}\p{Sc}\n\r\t]+$/u;
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -39,11 +46,22 @@ function Index() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(typeof navigator !== "undefined" && !navigator.onLine);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
+
+  // Online/offline awareness
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
 
   function getSessionId() {
     let id = localStorage.getItem("rio_session_id");
@@ -51,9 +69,45 @@ function Index() {
     return id;
   }
 
-  async function submit(text: string) {
+  // Restore conversation history from Supabase (persistência)
+  useEffect(() => {
+    (async () => {
+      try {
+        const savedId = localStorage.getItem("rio_conversation_id");
+        if (!savedId) return;
+        const { data, error } = await supabase
+          .from("messages")
+          .select("role,content,created_at")
+          .eq("conversation_id", savedId)
+          .order("created_at", { ascending: true })
+          .limit(50);
+        if (error || !data?.length) return;
+        setConversationId(savedId);
+        setMessages(data.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })));
+      } catch { /* ignora — começa conversa nova */ }
+    })();
+  }, []);
+
+  function validate(text: string): string | null {
     const t = text.trim();
-    if (!t || loading) return;
+    if (!t) return "Digite uma pergunta.";
+    if (t.length < 2) return "Pergunta muito curta.";
+    if (t.length > MAX_INPUT) return `Limite de ${MAX_INPUT} caracteres.`;
+    if (!SAFE_TEXT.test(t)) return "Texto contém caracteres não permitidos.";
+    return null;
+  }
+
+  async function submit(text: string) {
+    if (loading) return;
+    const err = validate(text);
+    if (err) { setInputError(err); return; }
+    setInputError(null);
+    if (!navigator.onLine) {
+      setOffline(true);
+      setMessages((p) => [...p, { role: "user", content: text.trim() }, { role: "assistant", content: "📴 Você está offline. Enquanto isso, veja sugestões visuais abaixo (praias, eventos, Cristo Redentor) e tente novamente quando voltar a conexão." }]);
+      return;
+    }
+    const t = text.trim();
     setMessages((p) => [...p, { role: "user", content: t }]);
     setInput("");
     setLoading(true);
@@ -62,9 +116,15 @@ function Index() {
       if (res.error) setMessages((p) => [...p, { role: "assistant", content: `⚠️ ${res.error}` }]);
       else if (res.reply) {
         setMessages((p) => [...p, { role: "assistant", content: res.reply! }]);
-        if (res.conversationId) setConversationId(res.conversationId);
+        if (res.conversationId) {
+          setConversationId(res.conversationId);
+          localStorage.setItem("rio_conversation_id", res.conversationId);
+        }
       }
-    } catch { setMessages((p) => [...p, { role: "assistant", content: "⚠️ Erro de conexão." }]); }
+    } catch {
+      setMessages((p) => [...p, { role: "assistant", content: "⚠️ Sem conexão com o guia agora. Veja as imagens do Rio abaixo enquanto a internet volta." }]);
+      setOffline(true);
+    }
     finally { setLoading(false); }
   }
 
@@ -113,11 +173,21 @@ function Index() {
       {/* Chat */}
       <section className="max-w-3xl mx-auto px-4 py-12">
         <div className="rounded-3xl border border-border bg-card/80 backdrop-blur p-5 shadow-xl">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <h2 className="font-bold">Pergunte ao Guia Local (IA)</h2>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <h2 className="font-bold">Pergunte ao Guia Local</h2>
+            </div>
+            {offline && (
+              <span className="inline-flex items-center gap-1 text-xs text-destructive font-medium"><WifiOff className="w-3.5 h-3.5" /> offline</span>
+            )}
           </div>
-          {messages.length === 0 && (
+          {/* AI disclosure */}
+          <div className="flex items-start gap-2 mb-3 p-2.5 rounded-lg bg-secondary/60 text-xs text-muted-foreground">
+            <Bot className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <p>Você está conversando com uma <strong>Inteligência Artificial</strong>. As respostas podem conter imprecisões — confirme horários e preços nos sites oficiais. Histórico salvo com segurança.</p>
+          </div>
+          {messages.length === 0 && !offline && (
             <div className="flex flex-wrap gap-2 mb-4">
               {["Roteiro econômico de 2 dias", "O que fazer com chuva?", "Bairros mais seguros"].map((s) => (
                 <button key={s} onClick={() => submit(s)} className="text-xs px-3 py-1.5 rounded-full bg-secondary hover:bg-accent hover:text-accent-foreground transition">{s}</button>
@@ -127,14 +197,38 @@ function Index() {
           {messages.length > 0 && (
             <div ref={scrollRef} className="flex flex-col gap-3 mb-4 max-h-80 overflow-y-auto pr-1">
               {messages.map((m, i) => (
-                <div key={i} className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm whitespace-pre-wrap ${m.role === "user" ? "self-end bg-primary text-primary-foreground" : "self-start bg-secondary"}`}>{m.content}</div>
+                <div key={i} className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm whitespace-pre-wrap ${m.role === "user" ? "self-end bg-primary text-primary-foreground" : "self-start bg-secondary"}`}>
+                  {m.role === "assistant" && <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground mb-1"><Bot className="w-3 h-3" /> IA</div>}
+                  {m.content}
+                </div>
               ))}
-              {loading && <div className="self-start text-xs text-muted-foreground">digitando…</div>}
+              {loading && <div className="self-start text-xs text-muted-foreground">a IA está digitando…</div>}
             </div>
           )}
-          <form onSubmit={(e) => { e.preventDefault(); submit(input); }} className="flex gap-2">
-            <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Pergunte sobre o Rio…" maxLength={500} className="flex-1 px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:border-primary" />
-            <button disabled={loading || !input.trim()} className="px-4 rounded-xl bg-primary text-primary-foreground disabled:opacity-40"><Send className="w-4 h-4" /></button>
+          {/* Offline fallback gallery */}
+          {offline && (
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[{src: cristo, alt: "Cristo Redentor"}, {src: rioBeach, alt: "Praia do Rio"}, {src: eventosRio, alt: "Eventos no Rio"}].map((img) => (
+                <img key={img.alt} src={img.src} alt={img.alt} className="rounded-xl object-cover h-24 w-full" loading="lazy" />
+              ))}
+            </div>
+          )}
+          <form onSubmit={(e) => { e.preventDefault(); submit(input); }} className="flex flex-col gap-1.5">
+            <div className="flex gap-2">
+              <input
+                value={input}
+                onChange={(e) => { setInput(e.target.value); if (inputError) setInputError(null); }}
+                placeholder={offline ? "Aguardando conexão…" : "Pergunte sobre o Rio…"}
+                maxLength={MAX_INPUT}
+                disabled={offline}
+                className="flex-1 px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:border-primary disabled:opacity-50"
+              />
+              <button disabled={loading || !input.trim() || offline} className="px-4 rounded-xl bg-primary text-primary-foreground disabled:opacity-40"><Send className="w-4 h-4" /></button>
+            </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className={inputError ? "text-destructive" : "text-muted-foreground"}>{inputError ?? "Apenas perguntas sobre o Rio. Sem código, links ou caracteres especiais."}</span>
+              <span className={`tabular-nums ${input.length > MAX_INPUT * 0.9 ? "text-destructive" : "text-muted-foreground"}`}>{input.length}/{MAX_INPUT}</span>
+            </div>
           </form>
         </div>
       </section>
