@@ -46,11 +46,22 @@ function Index() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(typeof navigator !== "undefined" && !navigator.onLine);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
+
+  // Online/offline awareness
+  useEffect(() => {
+    const on = () => setOffline(false);
+    const off = () => setOffline(true);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
 
   function getSessionId() {
     let id = localStorage.getItem("rio_session_id");
@@ -58,9 +69,45 @@ function Index() {
     return id;
   }
 
-  async function submit(text: string) {
+  // Restore conversation history from Supabase (persistência)
+  useEffect(() => {
+    (async () => {
+      try {
+        const savedId = localStorage.getItem("rio_conversation_id");
+        if (!savedId) return;
+        const { data, error } = await supabase
+          .from("messages")
+          .select("role,content,created_at")
+          .eq("conversation_id", savedId)
+          .order("created_at", { ascending: true })
+          .limit(50);
+        if (error || !data?.length) return;
+        setConversationId(savedId);
+        setMessages(data.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })));
+      } catch { /* ignora — começa conversa nova */ }
+    })();
+  }, []);
+
+  function validate(text: string): string | null {
     const t = text.trim();
-    if (!t || loading) return;
+    if (!t) return "Digite uma pergunta.";
+    if (t.length < 2) return "Pergunta muito curta.";
+    if (t.length > MAX_INPUT) return `Limite de ${MAX_INPUT} caracteres.`;
+    if (!SAFE_TEXT.test(t)) return "Texto contém caracteres não permitidos.";
+    return null;
+  }
+
+  async function submit(text: string) {
+    if (loading) return;
+    const err = validate(text);
+    if (err) { setInputError(err); return; }
+    setInputError(null);
+    if (!navigator.onLine) {
+      setOffline(true);
+      setMessages((p) => [...p, { role: "user", content: text.trim() }, { role: "assistant", content: "📴 Você está offline. Enquanto isso, veja sugestões visuais abaixo (praias, eventos, Cristo Redentor) e tente novamente quando voltar a conexão." }]);
+      return;
+    }
+    const t = text.trim();
     setMessages((p) => [...p, { role: "user", content: t }]);
     setInput("");
     setLoading(true);
@@ -69,9 +116,15 @@ function Index() {
       if (res.error) setMessages((p) => [...p, { role: "assistant", content: `⚠️ ${res.error}` }]);
       else if (res.reply) {
         setMessages((p) => [...p, { role: "assistant", content: res.reply! }]);
-        if (res.conversationId) setConversationId(res.conversationId);
+        if (res.conversationId) {
+          setConversationId(res.conversationId);
+          localStorage.setItem("rio_conversation_id", res.conversationId);
+        }
       }
-    } catch { setMessages((p) => [...p, { role: "assistant", content: "⚠️ Erro de conexão." }]); }
+    } catch {
+      setMessages((p) => [...p, { role: "assistant", content: "⚠️ Sem conexão com o guia agora. Veja as imagens do Rio abaixo enquanto a internet volta." }]);
+      setOffline(true);
+    }
     finally { setLoading(false); }
   }
 
