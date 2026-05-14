@@ -9,8 +9,74 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SegurancaRouteImport } from './routes/seguranca'
+import { Route as RotasRouteImport } from './routes/rotas'
+import { Route as PreferenciasRouteImport } from './routes/preferencias'
+import { Route as NoticiasRouteImport } from './routes/noticias'
+import { Route as LocaisRouteImport } from './routes/locais'
+import { Route as HoteisRouteImport } from './routes/hoteis'
+import { Route as EventosRouteImport } from './routes/eventos'
+import { Route as ConversorRouteImport } from './routes/conversor'
+import { Route as ContaRouteImport } from './routes/conta'
+import { Route as ComidaRouteImport } from './routes/comida'
+import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SegurancaRoute = SegurancaRouteImport.update({
+  id: '/seguranca',
+  path: '/seguranca',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RotasRoute = RotasRouteImport.update({
+  id: '/rotas',
+  path: '/rotas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreferenciasRoute = PreferenciasRouteImport.update({
+  id: '/preferencias',
+  path: '/preferencias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NoticiasRoute = NoticiasRouteImport.update({
+  id: '/noticias',
+  path: '/noticias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocaisRoute = LocaisRouteImport.update({
+  id: '/locais',
+  path: '/locais',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HoteisRoute = HoteisRouteImport.update({
+  id: '/hoteis',
+  path: '/hoteis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventosRoute = EventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConversorRoute = ConversorRouteImport.update({
+  id: '/conversor',
+  path: '/conversor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContaRoute = ContaRouteImport.update({
+  id: '/conta',
+  path: '/conta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComidaRoute = ComidaRouteImport.update({
+  id: '/comida',
+  path: '/comida',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClimaRoute = ClimaRouteImport.update({
+  id: '/clima',
+  path: '/clima',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +85,186 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/clima': typeof ClimaRoute
+  '/comida': typeof ComidaRoute
+  '/conta': typeof ContaRoute
+  '/conversor': typeof ConversorRoute
+  '/eventos': typeof EventosRoute
+  '/hoteis': typeof HoteisRoute
+  '/locais': typeof LocaisRoute
+  '/noticias': typeof NoticiasRoute
+  '/preferencias': typeof PreferenciasRoute
+  '/rotas': typeof RotasRoute
+  '/seguranca': typeof SegurancaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/clima': typeof ClimaRoute
+  '/comida': typeof ComidaRoute
+  '/conta': typeof ContaRoute
+  '/conversor': typeof ConversorRoute
+  '/eventos': typeof EventosRoute
+  '/hoteis': typeof HoteisRoute
+  '/locais': typeof LocaisRoute
+  '/noticias': typeof NoticiasRoute
+  '/preferencias': typeof PreferenciasRoute
+  '/rotas': typeof RotasRoute
+  '/seguranca': typeof SegurancaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/clima': typeof ClimaRoute
+  '/comida': typeof ComidaRoute
+  '/conta': typeof ContaRoute
+  '/conversor': typeof ConversorRoute
+  '/eventos': typeof EventosRoute
+  '/hoteis': typeof HoteisRoute
+  '/locais': typeof LocaisRoute
+  '/noticias': typeof NoticiasRoute
+  '/preferencias': typeof PreferenciasRoute
+  '/rotas': typeof RotasRoute
+  '/seguranca': typeof SegurancaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/clima'
+    | '/comida'
+    | '/conta'
+    | '/conversor'
+    | '/eventos'
+    | '/hoteis'
+    | '/locais'
+    | '/noticias'
+    | '/preferencias'
+    | '/rotas'
+    | '/seguranca'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/clima'
+    | '/comida'
+    | '/conta'
+    | '/conversor'
+    | '/eventos'
+    | '/hoteis'
+    | '/locais'
+    | '/noticias'
+    | '/preferencias'
+    | '/rotas'
+    | '/seguranca'
+  id:
+    | '__root__'
+    | '/'
+    | '/clima'
+    | '/comida'
+    | '/conta'
+    | '/conversor'
+    | '/eventos'
+    | '/hoteis'
+    | '/locais'
+    | '/noticias'
+    | '/preferencias'
+    | '/rotas'
+    | '/seguranca'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClimaRoute: typeof ClimaRoute
+  ComidaRoute: typeof ComidaRoute
+  ContaRoute: typeof ContaRoute
+  ConversorRoute: typeof ConversorRoute
+  EventosRoute: typeof EventosRoute
+  HoteisRoute: typeof HoteisRoute
+  LocaisRoute: typeof LocaisRoute
+  NoticiasRoute: typeof NoticiasRoute
+  PreferenciasRoute: typeof PreferenciasRoute
+  RotasRoute: typeof RotasRoute
+  SegurancaRoute: typeof SegurancaRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/seguranca': {
+      id: '/seguranca'
+      path: '/seguranca'
+      fullPath: '/seguranca'
+      preLoaderRoute: typeof SegurancaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rotas': {
+      id: '/rotas'
+      path: '/rotas'
+      fullPath: '/rotas'
+      preLoaderRoute: typeof RotasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/preferencias': {
+      id: '/preferencias'
+      path: '/preferencias'
+      fullPath: '/preferencias'
+      preLoaderRoute: typeof PreferenciasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/noticias': {
+      id: '/noticias'
+      path: '/noticias'
+      fullPath: '/noticias'
+      preLoaderRoute: typeof NoticiasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/locais': {
+      id: '/locais'
+      path: '/locais'
+      fullPath: '/locais'
+      preLoaderRoute: typeof LocaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hoteis': {
+      id: '/hoteis'
+      path: '/hoteis'
+      fullPath: '/hoteis'
+      preLoaderRoute: typeof HoteisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eventos': {
+      id: '/eventos'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof EventosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conversor': {
+      id: '/conversor'
+      path: '/conversor'
+      fullPath: '/conversor'
+      preLoaderRoute: typeof ConversorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conta': {
+      id: '/conta'
+      path: '/conta'
+      fullPath: '/conta'
+      preLoaderRoute: typeof ContaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comida': {
+      id: '/comida'
+      path: '/comida'
+      fullPath: '/comida'
+      preLoaderRoute: typeof ComidaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clima': {
+      id: '/clima'
+      path: '/clima'
+      fullPath: '/clima'
+      preLoaderRoute: typeof ClimaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,7 +277,28 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClimaRoute: ClimaRoute,
+  ComidaRoute: ComidaRoute,
+  ContaRoute: ContaRoute,
+  ConversorRoute: ConversorRoute,
+  EventosRoute: EventosRoute,
+  HoteisRoute: HoteisRoute,
+  LocaisRoute: LocaisRoute,
+  NoticiasRoute: NoticiasRoute,
+  PreferenciasRoute: PreferenciasRoute,
+  RotasRoute: RotasRoute,
+  SegurancaRoute: SegurancaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
