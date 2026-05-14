@@ -1,9 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Send, Sparkles, Calendar, Map, Hotel, Camera, UtensilsCrossed, Cloud, Compass, Shield, Bell, DollarSign } from "lucide-react";
+import { Send, Sparkles, Calendar, Map, Hotel, Camera, UtensilsCrossed, Cloud, Compass, Shield, Bell, DollarSign, Bot, WifiOff } from "lucide-react";
 import { sendChatMessage } from "@/lib/chat.functions";
+import { supabase } from "@/integrations/supabase/client";
 import cristo from "@/assets/cristo-hero.jpg";
+import rioBeach from "@/assets/rio-beach.jpg";
+import eventosRio from "@/assets/eventos-rio.jpg";
+
+const MAX_INPUT = 500;
+// Allow letters (incl. accents), digits, whitespace and common punctuation. Block control chars.
+const SAFE_TEXT = /^[\p{L}\p{N}\p{P}\p{Zs}\p{Sc}\n\r\t]+$/u;
 
 export const Route = createFileRoute("/")({
   component: Index,
